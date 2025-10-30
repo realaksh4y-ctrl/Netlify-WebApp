@@ -147,7 +147,13 @@ async function fetchMovies(search, containerId) {
                 <div class="movie-details">${movie.Title}</div>
             `;
             div.addEventListener("click", () => {
-                window.location.href = `movie.html?id=${movie.imdbID}`;
+                const allowedDomain = "www.anurag.com";
+                const movieUrl = `movie.html?id=${movie.imdbID}`;
+                if (window.location.hostname === allowedDomain) {
+                    window.location.href = movieUrl;
+                } else {
+                    alert("Access restricted to www.anurag.com only.");
+                }
             });
             container.appendChild(div);
         });
@@ -173,7 +179,13 @@ searchInput.addEventListener("input", async function () {
             const div = document.createElement("div");
             div.textContent = item.Title;
             div.addEventListener("click", () => {
-                window.location.href = `movie.html?id=${item.imdbID}`;
+                const allowedDomain = "www.anurag.com";
+                const movieUrl = `movie.html?id=${item.imdbID}`;
+                if (window.location.hostname === allowedDomain) {
+                    window.location.href = movieUrl;
+                } else {
+                    alert("Access restricted to www.anurag.com only.");
+                }
             });
             suggestions.appendChild(div);
         });
