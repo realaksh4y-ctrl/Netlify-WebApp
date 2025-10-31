@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream2Series - Movie</title>
+    <title>Series Prime - Movie</title>
     <style>
         body {
             background-color: #0a0a0a;
@@ -24,7 +24,7 @@
         .logo {
             font-size: 26px;
             font-weight: bold;
-            color: #007bff;
+            color: #e50914; /* Series Prime red */
             cursor: pointer;
         }
 
@@ -91,7 +91,7 @@
 <body>
 
 <header>
-    <div class="logo" onclick="window.location.href='index.html'">Stream2Series</div>
+    <div class="logo" onclick="window.location.href='index.html'">Series Prime</div>
 </header>
 
 <div class="movie-container">
@@ -100,18 +100,19 @@
     <p id="plot" class="movie-plot"></p>
     <div class="rating">⭐ IMDB Rating: <span id="rating"></span></div>
 
-    <div class="ad-container">
-        <script type='text/javascript' src='//pl27949191.effectivegatecpm.com/20/ae/da/20aeda0a319a00a95826c651b886725c.js'></script>
+    <div class="ad-container" id="adTop">
+        <!-- Ad placeholder: insert ad code here if desired -->
+        <div style="background:#111;border:1px dashed #444;padding:12px;border-radius:6px;color:#999;">Ad placeholder (top)</div>
     </div>
 
     <div class="buttons">
-        <a href="#" class="btn download">⬇ Download 1</a>
-        <a href="#" class="btn download">⬇ Download 2</a>
-        <a href="#" class="btn watch">▶ Watch</a>
+        <a href="#" id="watchBtn" class="btn watch">▶ Watch</a>
+        <a href="#" class="btn ad-blank">Ad Slot</a>
     </div>
 
-    <div class="ad-container">
-        <script type='text/javascript' src='//pl27949191.effectivegatecpm.com/20/ae/da/20aeda0a319a00a95826c651b886725c.js'></script>
+    <div class="ad-container" id="adBottom">
+        <!-- Ad placeholder: insert ad code here for the ad slot -->
+        <div style="background:#111;border:1px dashed #444;padding:12px;border-radius:6px;color:#999;">Ad placeholder (bottom)</div>
     </div>
 </div>
 
@@ -129,6 +130,26 @@ async function loadMovie() {
     document.getElementById("title").textContent = movie.Title;
     document.getElementById("plot").textContent = movie.Plot;
     document.getElementById("rating").textContent = movie.imdbRating;
+
+    // render ratings/reviews if provided
+    const ratingsContainer = document.createElement('div');
+    ratingsContainer.style.color = '#ccc';
+    ratingsContainer.style.marginTop = '12px';
+    if (movie.Ratings && movie.Ratings.length) {
+        const list = movie.Ratings.map(r => `<div>${r.Source}: ${r.Value}</div>`).join('');
+        ratingsContainer.innerHTML = `<h3 style="color:#fff">Ratings</h3>${list}`;
+    } else {
+        ratingsContainer.innerHTML = '<div>No external ratings available.</div>';
+    }
+    document.querySelector('.movie-container').appendChild(ratingsContainer);
+
+    // watch button behavior
+    const watchBtn = document.getElementById('watchBtn');
+    watchBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        // redirect to series2watch.net as requested
+        window.open('https://series2watch.net', '_blank');
+    });
 }
 
 loadMovie();

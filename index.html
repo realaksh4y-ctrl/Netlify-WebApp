@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream2Series</title>
+    <title>Series Prime</title>
     <style>
         body {
             background-color: #0a0a0a;
@@ -28,21 +28,56 @@
         .logo {
             font-size: 26px;
             font-weight: bold;
-            color: #007bff;
+            color: #e50914;
         }
 
-        .search-bar {
-            width: 300px;
-            position: relative;
-        }
-
-        .search-bar input {
+        .search-hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 20px 0;
             width: 100%;
-            padding: 8px 12px;
-            border-radius: 4px;
+        }
+
+        .site-title {
+            color: #e50914; /* red like Netflix */
+            font-size: 48px;
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .welcome {
+            color: #cfcfcf;
+            margin: 0 0 10px 0;
+        }
+
+        .big-search {
+            width: 60%;
+            min-width: 320px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .big-search input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 6px;
             border: none;
+            font-size: 16px;
             background: #222;
             color: #fff;
+        }
+
+        .big-search button {
+            padding: 12px 18px;
+            border-radius: 6px;
+            border: none;
+            background: #e50914;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
         }
 
         .suggestions {
@@ -69,14 +104,15 @@
         }
 
         .section h2 {
-            border-left: 4px solid #007bff;
+            border-left: 4px solid #e50914;
             padding-left: 10px;
         }
 
         .movie-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+            align-items: start;
         }
 
         .movie-card {
@@ -105,85 +141,102 @@
 <body>
 
 <header>
-    <div class="logo">Stream2Series</div>
-    <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="Search movies or series...">
+    <div class="logo" id="logo">Series Prime</div>
+    <div class="search-hero">
+        <h1 class="site-title">Series Prime</h1>
+        <p class="welcome">Here you can watch every movie, webseries and anime for free.</p>
+        <div class="big-search">
+            <input type="text" id="searchInput" placeholder="Search movies, series or anime...">
+            <button id="searchBtn">Search</button>
+        </div>
         <div class="suggestions" id="suggestions"></div>
     </div>
 </header>
 
 <main>
-    <section class="section" id="hindi">
-        <h2>Hindi Movies</h2>
-        <div class="movie-grid" id="hindiMovies"></div>
-    </section>
-
-    <section class="section" id="english">
-        <h2>English Movies</h2>
-        <div class="movie-grid" id="englishMovies"></div>
-    </section>
-
-    <section class="section" id="webseries">
-        <h2>Web Series</h2>
-        <div class="movie-grid" id="webSeries"></div>
+    <section class="section" id="results">
+        <h2>Recommended</h2>
+        <div class="movie-grid" id="movieGrid"></div>
     </section>
 </main>
 
 <script>
 const apiKey = "8b7a81c";
 
-async function fetchMovies(search, containerId) {
-    const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&s=${search}`);
-    const data = await res.json();
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
+const movieGrid = document.getElementById('movieGrid');
+const searchInput = document.getElementById('searchInput');
+const suggestions = document.getElementById('suggestions');
+const searchBtn = document.getElementById('searchBtn');
 
-    if (data.Search) {
-        data.Search.forEach(movie => {
-            const div = document.createElement("div");
-            div.classList.add("movie-card");
-            div.innerHTML = `
-                <img src="${movie.Poster !== "N/A" ? movie.Poster : 'https://via.placeholder.com/200'}" alt="${movie.Title}">
-                <div class="movie-details">${movie.Title}</div>
-            `;
-            div.addEventListener("click", () => {
-                window.location.href = `movie.html?id=${movie.imdbID}`;
+async function searchAndRender(query) {
+    if (!query) return;
+    movieGrid.innerHTML = '';
+    try {
+        const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&s=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (data.Search) {
+            data.Search.forEach(movie => {
+                const div = document.createElement('div');
+                div.className = 'movie-card';
+                div.innerHTML = `
+                    <img src="${movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/200'}" alt="${movie.Title}">
+                    <div class="movie-details">${movie.Title}</div>
+                `;
+                div.addEventListener('click', () => {
+                    window.location.href = `movie.html?id=${movie.imdbID}`;
+                });
+                movieGrid.appendChild(div);
             });
-            container.appendChild(div);
-        });
+        } else {
+            movieGrid.innerHTML = '<p style="color:#ccc">No results found.</p>';
+        }
+    } catch (e) {
+        movieGrid.innerHTML = '<p style="color:#ccc">Error fetching results.</p>';
+        console.error(e);
     }
 }
 
-// Search suggestions
-const searchInput = document.getElementById("searchInput");
-const suggestions = document.getElementById("suggestions");
+// quick search on enter
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchAndRender(searchInput.value.trim());
+});
+searchBtn.addEventListener('click', () => searchAndRender(searchInput.value.trim()));
 
-searchInput.addEventListener("input", async function () {
+// suggestions (basic)
+searchInput.addEventListener('input', async function () {
     const query = this.value.trim();
     if (query.length < 3) {
-        suggestions.style.display = "none";
+        suggestions.style.display = 'none';
         return;
     }
-    const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&s=${query}`);
-    const data = await res.json();
-    suggestions.innerHTML = "";
-    if (data.Search) {
-        suggestions.style.display = "block";
-        data.Search.slice(0, 5).forEach(item => {
-            const div = document.createElement("div");
-            div.textContent = item.Title;
-            div.addEventListener("click", () => {
-                window.location.href = `movie.html?id=${item.imdbID}`;
+    try {
+        const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&s=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        suggestions.innerHTML = '';
+        if (data.Search) {
+            suggestions.style.display = 'block';
+            data.Search.slice(0, 5).forEach(item => {
+                const div = document.createElement('div');
+                div.textContent = item.Title;
+                div.addEventListener('click', () => {
+                    window.location.href = `movie.html?id=${item.imdbID}`;
+                });
+                suggestions.appendChild(div);
             });
-            suggestions.appendChild(div);
-        });
+        } else {
+            suggestions.style.display = 'none';
+        }
+    } catch (e) {
+        suggestions.style.display = 'none';
     }
 });
 
-// Default categories
-fetchMovies("Hindi", "hindiMovies");
-fetchMovies("English", "englishMovies");
-fetchMovies("web series", "webSeries");
+// initial popular searches to populate grid
+const initialQueries = ['Avengers', 'Batman', 'Inception', 'Naruto', 'Game of Thrones', 'Spider-Man'];
+(async () => {
+    // fetch first query as initial
+    await searchAndRender(initialQueries[0]);
+})();
 </script>
 
 </body>
