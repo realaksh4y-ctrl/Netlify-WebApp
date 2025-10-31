@@ -101,18 +101,37 @@
     <div class="rating">⭐ IMDB Rating: <span id="rating"></span></div>
 
     <div class="ad-container" id="adTop">
-        <!-- Ad placeholder: insert ad code here if desired -->
-        <div style="background:#111;border:1px dashed #444;padding:12px;border-radius:6px;color:#999;">Ad placeholder (top)</div>
+        <!-- Ad banner (top) -->
+        <script type="text/javascript">
+            atOptions = {
+                'key' : '829a9baac55bbf582090102923015b4e',
+                'format' : 'iframe',
+                'height' : 300,
+                'width' : 160,
+                'params' : {}
+            };
+        </script>
+        <script type="text/javascript" src="//www.highperformanceformat.com/829a9baac55bbf582090102923015b4e/invoke.js"></script>
     </div>
 
     <div class="buttons">
         <a href="#" id="watchBtn" class="btn watch">▶ Watch</a>
-        <a href="#" class="btn ad-blank">Ad Slot</a>
+    <button id="streamBtn" class="btn stream">Stream</button>
+    <div id="streamMessage" style="color:#ccc;margin-top:8px;font-size:14px;"></div>
     </div>
 
     <div class="ad-container" id="adBottom">
-        <!-- Ad placeholder: insert ad code here for the ad slot -->
-        <div style="background:#111;border:1px dashed #444;padding:12px;border-radius:6px;color:#999;">Ad placeholder (bottom)</div>
+        <!-- Ad banner (bottom) -->
+        <script type="text/javascript">
+            atOptions = {
+                'key' : '829a9baac55bbf582090102923015b4e',
+                'format' : 'iframe',
+                'height' : 300,
+                'width' : 160,
+                'params' : {}
+            };
+        </script>
+        <script type="text/javascript" src="//www.highperformanceformat.com/829a9baac55bbf582090102923015b4e/invoke.js"></script>
     </div>
 </div>
 
@@ -143,11 +162,74 @@ async function loadMovie() {
     }
     document.querySelector('.movie-container').appendChild(ratingsContainer);
 
-    // watch button behavior
+    // watch button behavior (immediate)
     const watchBtn = document.getElementById('watchBtn');
     watchBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        // redirect to series2watch.net as requested
+        window.open('https://series2watch.net', '_blank');
+    });
+
+    // Stream button behavior: require 5 presses to redirect; load ad script on first two attempts
+    const streamBtn = document.getElementById('streamBtn');
+    const streamMessage = document.getElementById('streamMessage');
+    const AD_SCRIPT_SRC = '//pl27949191.effectivegatecpm.com/20/ae/da/20aeda0a319a00a95826c651b886725c.js';
+
+    // Use sessionStorage so counts persist per tab session
+    const storageKey = `stream_clicks_${imdbID || 'global'}`;
+    function getClicks() {
+        return parseInt(sessionStorage.getItem(storageKey) || '0', 10);
+    }
+    function setClicks(v) {
+        sessionStorage.setItem(storageKey, String(v));
+    }
+
+    function lazyLoadAdScript() {
+        // ensure we only load once
+        if (document.querySelector("script[data-ad='effective-gate']")) return;
+        const s = document.createElement('script');
+        s.type = 'text/javascript';
+        s.src = AD_SCRIPT_SRC;
+        s.setAttribute('data-ad', 'effective-gate');
+        // append near the adBottom container so it renders there
+        const target = document.getElementById('adBottom') || document.body;
+        target.appendChild(s);
+    }
+
+    function updateStreamMessage() {
+        const clicks = getClicks();
+        if (clicks >= 5) {
+            streamMessage.textContent = 'Unlocked — redirecting...';
+        } else if (clicks > 0) {
+            streamMessage.textContent = `Press Stream ${5 - clicks} more time(s) to unlock.`;
+        } else {
+            streamMessage.textContent = 'Press Stream to view ads and unlock streaming.';
+        }
+    }
+
+    // initialize message
+    updateStreamMessage();
+
+    streamBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        let clicks = getClicks();
+        clicks += 1;
+        setClicks(clicks);
+
+        // On first two attempts, load ad script (ad appears in adBottom)
+        if (clicks <= 2) {
+            lazyLoadAdScript();
+            streamMessage.textContent = `Ad shown (attempt ${clicks}/2). Press ${5 - clicks} more time(s) to unlock.`;
+            return;
+        }
+
+        if (clicks < 5) {
+            streamMessage.textContent = `Press Stream ${5 - clicks} more time(s) to unlock.`;
+            return;
+        }
+
+        // clicks >= 5 -> redirect to the external site
+        streamMessage.textContent = 'Unlocked — opening stream.';
+        // open in new tab
         window.open('https://series2watch.net', '_blank');
     });
 }
